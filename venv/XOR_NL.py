@@ -3,6 +3,7 @@ import numpy as np
 np.set_printoptions(precision=3, suppress=True)
 np.random.seed(0)
 l = 3
+bias = 1
 
 graph_set = {
     "x_axis" : [],
@@ -10,19 +11,20 @@ graph_set = {
 }
 
 NL = {
-    "layer" : [None]*l,
-    "l_error" : [None]*l,
-    "l_delta" : [None]*l,
-    "synapse" : [None]*(l-1)
+    "layer" : [None] * l,
+    "l_error" : [None] * l,
+    "l_delta" : [None] * l,
+    "synapse" : [None] * (l - 1)
 }
 
 def sigmoid(x):
-    return 1/(1+np.exp(-x))
+    return 1 / (1 + np.exp(-x))
 
 def d_sigmoid(x):
     return sigmoid(x) * (1 - sigmoid(x))
 
 def train(inputs, outputs, generations=4096):
+    inputs = np.column_stack((inputs, [bias for i in range(len(inputs))]))
     NL["synapse"][0] = 2 * np.random.random((inputs.T).shape) - 1
     NL["synapse"][1] = 2 * np.random.random(outputs.shape) - 1
     NL["layer"][0] = inputs
@@ -47,6 +49,8 @@ def train(inputs, outputs, generations=4096):
             graph_set["x_axis"].append(i / 1000)
             graph_set["y_axis"].append(np.mean(abs(NL["l_error"][l - 1])))
 
+    return NL["synapse"]
+
 def show_neural_network():
     print("L0:\n", NL["layer"][0])
     print("SYNAPCES_01:\n", NL["synapse"][0])
@@ -54,10 +58,12 @@ def show_neural_network():
     print("SYNAPCES_12:\n", NL["synapse"][1])
     print("L2:\n", NL["layer"][2])
 
-def run(input):
-    for data in input:
-        NL["layer"][1] = sigmoid(np.dot(data, NL["synapse"][0]))
-        print("XOR: ", data, " = ", sigmoid(np.dot(NL["layer"][1],NL["synapse"][1])))
+def run(layer_input, synapses):
+    layer_input = np.column_stack((layer_input, [bias for i in range(len(layer_input))]))
+    for data in layer_input:
+        layer_hidden = sigmoid(np.dot(data, synapses[0]))
+        layer_out = sigmoid(np.dot(layer_hidden, synapses[1]))
+        print("XOR: ", data, " = ", layer_out)
 
 def MSE_grapf():
     plt.plot(graph_set["x_axis"], graph_set["y_axis"], c="black", linewidth=4, marker="o", markersize=6, label="MSE")
