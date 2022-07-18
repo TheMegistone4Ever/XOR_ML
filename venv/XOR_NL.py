@@ -4,12 +4,10 @@ np.set_printoptions(precision=3, suppress=True)
 np.random.seed(0)
 l = 3
 bias = 1
-
 graph_set = {
     "x_axis" : [],
     "y_axis" : []
 }
-
 NL = {
     "layer" : [None] * l,
     "l_error" : [None] * l,
