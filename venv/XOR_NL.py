@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
-np.random.seed(0)
+np.random.seed(1)
 l = 3
 bias = 1
+MAE_lim = 0.01
 graph_set = {
     "x_axis" : [],
     "y_axis" : []
@@ -22,10 +23,9 @@ def d_sigmoid(x):
     return sigmoid(x) * (1 - sigmoid(x))
 
 def train(inputs, outputs, generations=4096):
-    inputs = np.column_stack((inputs, [bias for i in range(len(inputs))]))
-    NL["synapse"][0] = 2 * np.random.random((inputs.T).shape) - 1
+    NL["layer"][0] = np.column_stack((inputs, [bias for i in range(len(inputs))]))
+    NL["synapse"][0] = 2 * np.random.random((NL["layer"][0].T).shape) - 1
     NL["synapse"][1] = 2 * np.random.random(outputs.shape) - 1
-    NL["layer"][0] = inputs
 
     for i in range(generations):
         # Layers initialization
@@ -43,9 +43,14 @@ def train(inputs, outputs, generations=4096):
         for j in range(l - 1):
             NL["synapse"][l - 2 - j] += np.dot(NL["layer"][l - 2 - j].T, NL["l_delta"][l - 1 - j])
 
-        if i % 1000 == 0:
-            graph_set["x_axis"].append(i / 1000)
-            graph_set["y_axis"].append(np.mean(abs(NL["l_error"][l - 1])))
+        MAE = np.mean(abs(NL["l_error"][l - 1]))
+        if MAE < MAE_lim:
+            print("Stoped learning because MAE less than MAE limit = ", MAE_lim)
+            break
+
+        if i % 100 == 0:
+            graph_set["x_axis"].append(i / 100)
+            graph_set["y_axis"].append(MAE)
 
     return NL["synapse"]
 
@@ -57,13 +62,16 @@ def show_neural_network():
     print("L2:\n", NL["layer"][2])
 
 def run(layer_input, synapses):
-    layer_input = np.column_stack((layer_input, [bias for i in range(len(layer_input))]))
-    for data in layer_input:
-        layer_hidden = sigmoid(np.dot(data, synapses[0]))
+    layer_add = np.column_stack((layer_input, [bias for i in range(len(layer_input))]))
+    for i in range(len(layer_add)):
+        layer_hidden = sigmoid(np.dot(layer_add[i], synapses[0]))
         layer_out = sigmoid(np.dot(layer_hidden, synapses[1]))
-        print("XOR: ", data, " = ", layer_out)
+        print("XOR: ", layer_input[i], " = ", layer_out)
 
 def MSE_grapf():
-    plt.plot(graph_set["x_axis"], graph_set["y_axis"], c="black", linewidth=4, marker="o", markersize=6, label="MSE")
+    plt.title("Graph of mean absolute error (MAE) with respect to generations")
+    plt.xlabel("Generations")
+    plt.ylabel("MAE")
+    plt.plot(graph_set["x_axis"], graph_set["y_axis"], linewidth=3, marker="o", markersize=6, label="MAE line")
     plt.legend()
     plt.show()

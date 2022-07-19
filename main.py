@@ -1,6 +1,6 @@
 from XOR_NL import *
 import time
-generations = 20000
+generations = 100000
 start_time = time.time()
 training_inputs = np.array([
     [0, 0, 0],
